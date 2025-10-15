@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Github from "next-auth/providers/github"
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from '@/db';
+import {AdapterSession, AdapterUser} from "@auth/core/adapters";
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
@@ -21,7 +22,11 @@ export const { handlers: { GET, POST }, auth, signOut, signIn }  = NextAuth({
     ],
     callbacks: {
         //usually not needed. fixing a bug for nextauth
-        async session({ session, user }: any) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        async session({ session, user }: { session: {
+                user: AdapterUser
+            } & AdapterSession, user: AdapterUser }) {
             if (session && user){
                 session.user.id = user.id;
             }
