@@ -1,37 +1,36 @@
-import NextAuth from "next-auth";
-import Github from "next-auth/providers/github"
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import NextAuth from 'next-auth';
+import Github from 'next-auth/providers/github';
+import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/db';
-import {AdapterSession, AdapterUser} from "@auth/core/adapters";
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
-    throw new Error('Missing github environment variable');
+  throw new Error('Missing github oauth credentials');
 }
 
-//GET and POST are request handlers that will be called directly from github
-export const { handlers: { GET, POST }, auth, signOut, signIn }  = NextAuth({
-    adapter: PrismaAdapter(db),
-    providers: [
-        Github({
-            clientId: GITHUB_CLIENT_ID,
-            clientSecret: GITHUB_CLIENT_SECRET,
-        })
-    ],
-    callbacks: {
-        //usually not needed. fixing a bug for nextauth
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
-        async session({ session, user }: { session: {
-                user: AdapterUser
-            } & AdapterSession, user: AdapterUser }) {
-            if (session && user){
-                session.user.id = user.id;
-            }
+export const {
+  handlers: { GET, POST },
+  auth,
+  signOut,
+  signIn,
+} = NextAuth({
+  adapter: PrismaAdapter(db),
+  providers: [
+    Github({
+      clientId: GITHUB_CLIENT_ID,
+      clientSecret: GITHUB_CLIENT_SECRET,
+    }),
+  ],
+  callbacks: {
+    // Usually not needed, here we are fixing a bug in nextauth
+    async session({ session, user }: any) {
+      if (session && user) {
+        session.user.id = user.id;
+      }
 
-            return session;
-        }
-    }
-})
+      return session;
+    },
+  },
+});

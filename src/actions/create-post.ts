@@ -1,6 +1,6 @@
 "use server";
 
-import type { Post, Topic } from "@prisma/client";
+import type { Post } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -22,9 +22,9 @@ interface CreatePostFormState {
 }
 
 export async function createPost(
-  topicSlug: string,
+  slug: string,
   formState: CreatePostFormState,
-  formData: FormData,
+  formData: FormData
 ): Promise<CreatePostFormState> {
   const result = createPostSchema.safeParse({
     title: formData.get("title"),
@@ -41,21 +41,19 @@ export async function createPost(
   if (!session || !session.user || !session.user.id) {
     return {
       errors: {
-        _form: ["You must be signed in"],
+        _form: ["You must be signed in to do this"],
       },
     };
   }
 
-  const topic: Topic | null = await db.topic.findFirst({
-    where: {
-      slug: topicSlug,
-    },
+  const topic = await db.topic.findFirst({
+    where: { slug },
   });
 
   if (!topic) {
     return {
       errors: {
-        _form: ["Topic not found"],
+        _form: ["Cannot find topic"],
       },
     };
   }
@@ -64,28 +62,28 @@ export async function createPost(
   try {
     post = await db.post.create({
       data: {
-        topicId: topic.id,
-        content: result.data.content,
         title: result.data.title,
+        content: result.data.content,
         userId: session.user.id,
+        topicId: topic.id,
       },
     });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
+  } catch (err: unknown) {
+    if (err instanceof Error) {
       return {
         errors: {
-          _form: [error.message],
+          _form: [err.message],
         },
       };
     } else {
       return {
         errors: {
-          _form: ["Failed to create a post"],
+          _form: ["Failed to create post"],
         },
       };
     }
   }
 
-  revalidatePath(paths.topicShow(topicSlug));
-  redirect(paths.postShow(topicSlug, post.id));
+  revalidatePath(paths.topicShow(slug));
+  redirect(paths.postShow(slug, post.id));
 }
