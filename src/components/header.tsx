@@ -4,9 +4,10 @@ import {
   NavbarBrand,
   NavbarContent,
   NavbarItem,
-  Input,
 } from '@nextui-org/react';
 import HeaderAuth from '@/components/header-auth';
+import SearchInput from "@/components/search-input";
+import { Suspense } from "react";
 
 export default function Header() {
   return (
@@ -18,7 +19,14 @@ export default function Header() {
       </NavbarBrand>
       <NavbarContent justify="center">
         <NavbarItem>
-          <Input />
+            {/*
+                Search Inpunt is making use of useSearchParams
+                Because of this hook it makes also the parent that is containing the component to not be rendered on the server
+                Adding Suspense it makes to render the SearchInput on the Client and the rest of the component on the server
+            */}
+            <Suspense>
+                <SearchInput />
+            </Suspense>
         </NavbarItem>
       </NavbarContent>
 
